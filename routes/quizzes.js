@@ -1,128 +1,63 @@
 // routes/quizzes.js
-const express      = require('express');
-const Quiz         = require('../models/Quiz');
-const QuizAttempt  = require('../models/QuizAttempt');
-const User         = require('../models/User');
-const Transaction  = require('../models/Transaction');
+const express       = require('express');
+const Quiz          = require('../models/Quiz');
+const QuizAttempt   = require('../models/QuizAttempt');
+const User          = require('../models/User');
+const Transaction   = require('../models/Transaction');
 const { protect, teacherOnly } = require('../middleware/auth');
 
 const router = express.Router();
 
+// Lazy-load bot to avoid circular dependency
 const getNotify = () => {
-  try { return require('../bot').notifyStudent; } catch { return null; }
+  try { return require('../bot').notifyStudent; }
+  catch { return null; }
 };
-
-// GET /api/quizzes — teacher: o'z testlari, student: active testlar
-router.get('/', protect, async (req, res) => {
-  try {
-    let quizzes;
-    if (req.user.role === 'teacher') {
-      quizzes = await Quiz.find({ teacher: req.user._id }).sort({ createdAt: -1 });
-    } else {
-      // Student uchun: active + o'z sinfi
-      quizzes = await Quiz.find({ active: true }).sort({ createdAt: -1 }).select('-questions.correct');
-      // Har bir quiz uchun yechganmi yo'qmi
-      const attempts = await QuizAttempt.find({ student: req.user._id }).select('quiz score coinsEarned');
-      const attemptMap = {};
-      attempts.forEach(a => { attemptMap[a.quiz.toString()] = a; });
-      quizzes = quizzes.map(q => ({
-        ...q.toObject(),
-        attempt: attemptMap[q._id.toString()] || null,
-      }));
-    }
-    res.json(quizzes);
-  } catch (err) { res.status(500).json({ message: err.message }); }
-});
-
-// POST /api/quizzes — test yaratish (teacher)
-router.post('/', protect, teacherOnly, async (req, res) => {
-  try {
-    const { title, subject, class: cls, questions, maxCoins, timeLimit } = req.body;
-    if (!title || !questions?.length)
-      return res.status(400).json({ message: 'Title and questions required' });
-
-    const quiz = await Quiz.create({
-      title, subject, class: cls,
-      questions, maxCoins: maxCoins || 20,
-      timeLimit: timeLimit || 10,
-      teacher: req.user._id,
-    });
-
-    // Notification: shu sinfga
-    const students = await User.find({ role: 'student', class: cls, telegramId: { $ne: null } });
-    const notify = getNotify();
-    if (notify) {
-      students.forEach(s => {
-        notify(s.telegramId,
-          `📝 *Yangi test!*\n\n` +
-          `📚 ${title}\n` +
-          `🏫 Sinf: ${cls || 'Hammaga'}\n` +
-          `🪙 Max: *${maxCoins || 20} coin*\n` +
-          `⏱ Vaqt: ${timeLimit || 10} min\n\n` +
-          `Platformaga kiring va testni yeching!`
-        );
-      });
-    }
-
-    res.status(201).json(quiz);
-  } catch (err) { res.status(500).json({ message: err.message }); }
-});
-
-// GET /api/quizzes/:id — bitta test
-router.get('/:id', protect, async (req, res) => {
-  try {
-    let quiz = await Quiz.findById(req.params.id);
-    if (!quiz) return res.status(404).json({ message: 'Quiz not found' });
-
-    // Student uchun correct javoblarni yashir
-    if (req.user.role === 'student') {
-      const obj = quiz.toObject();
-      obj.questions = obj.questions.map(q => ({ ...q, correct: undefined }));
-      // Yechganmi?
-      const attempt = await QuizAttempt.findOne({ quiz: quiz._id, student: req.user._id });
-      obj.attempt = attempt || null;
-      return res.json(obj);
-    }
-
-    res.json(quiz);
-  } catch (err) { res.status(500).json({ message: err.message }); }
-});
-
-// GET /api/quizzes/:id/results — natijalar (teacher)
-router.get('/:id/results', protect, teacherOnly, async (req, res) => {
-  try {
-    const attempts = await QuizAttempt.find({ quiz: req.params.id })
-      .populate('student', 'name email class avatar color coins')
-      .sort({ score: -1 });
-    res.json(attempts);
-  } catch (err) { res.status(500).json({ message: err.message }); }
-});
 
 // POST /api/quizzes/:id/submit — javoblarni yuborish (student)
 router.post('/:id/submit', protect, async (req, res) => {
   try {
-    if (req.user.role !== 'student')
+    if (req.user.role !== 'student') {
       return res.status(403).json({ message: 'Only students can submit' });
+    }
 
     const quiz = await Quiz.findById(req.params.id);
-    if (!quiz || !quiz.active)
+    if (!quiz || !quiz.active) {
       return res.status(404).json({ message: 'Quiz not found' });
+    }
 
     // Allaqachon yechganmi?
-    const existing = await QuizAttempt.findOne({ quiz: quiz._id, student: req.user._id });
-    if (existing)
-      return res.status(400).json({ message: 'Already completed', attempt: existing });
+    const existing = await QuizAttempt.findOne({
+      quiz: quiz._id,
+      student: req.user._id,
+    });
+
+    if (existing) {
+      return res.status(400).json({
+        message: 'Already completed',
+        attempt: existing,
+      });
+    }
 
     const { answers, timeTaken } = req.body;
 
-    // Ball hisoblash
+    // 🔐 Himoya: format tekshirish
+    if (!Array.isArray(answers) || answers.length !== quiz.questions.length) {
+      return res.status(400).json({ message: 'Invalid answers format' });
+    }
+
+    // ✅ Ball hisoblash (frontend oddiy index array yuboradi)
     let correct = 0;
-    answers.forEach(a => {
-      const q = quiz.questions[a.questionIndex];
-      if (q && q.correct === a.selected) correct++;
+
+    answers.forEach((selected, index) => {
+      const q = quiz.questions[index];
+
+      if (q && Number(q.correct) === Number(selected)) {
+        correct++;
+      }
     });
 
-    const score      = Math.round((correct / quiz.questions.length) * 100);
+    const score       = Math.round((correct / quiz.questions.length) * 100);
     const coinsEarned = Math.round(quiz.maxCoins * score / 100);
 
     // Attempt saqlash
@@ -135,9 +70,10 @@ router.post('/:id/submit', protect, async (req, res) => {
       timeTaken: timeTaken || 0,
     });
 
-    // Coin berish
+    // 💰 Coin berish
     if (coinsEarned > 0) {
       const student = await User.findById(req.user._id);
+
       student.coins += coinsEarned;
       await student.save();
 
@@ -149,11 +85,12 @@ router.post('/:id/submit', protect, async (req, res) => {
         category: 'quiz',
       });
 
-      // Telegram notification
+      // Telegram notify
       if (student.telegramId) {
         const notify = getNotify();
         if (notify) {
-          notify(student.telegramId,
+          notify(
+            student.telegramId,
             `🎯 *Test natijasi!*\n\n` +
             `📝 ${quiz.title}\n` +
             `✅ Natija: *${score}%* (${correct}/${quiz.questions.length})\n` +
@@ -164,28 +101,17 @@ router.post('/:id/submit', protect, async (req, res) => {
       }
     }
 
-    res.json({ attempt, score, coinsEarned, correct, total: quiz.questions.length });
-  } catch (err) { res.status(500).json({ message: err.message }); }
-});
+    return res.json({
+      score,
+      coinsEarned,
+      correct,
+      total: quiz.questions.length,
+      attempt,
+    });
 
-// DELETE /api/quizzes/:id — o'chirish (teacher)
-router.delete('/:id', protect, teacherOnly, async (req, res) => {
-  try {
-    await Quiz.findByIdAndDelete(req.params.id);
-    await QuizAttempt.deleteMany({ quiz: req.params.id });
-    res.json({ message: 'Quiz deleted' });
-  } catch (err) { res.status(500).json({ message: err.message }); }
-});
-
-// PATCH /api/quizzes/:id/toggle — active/inactive
-router.patch('/:id/toggle', protect, teacherOnly, async (req, res) => {
-  try {
-    const quiz = await Quiz.findById(req.params.id);
-    if (!quiz) return res.status(404).json({ message: 'Quiz not found' });
-    quiz.active = !quiz.active;
-    await quiz.save();
-    res.json(quiz);
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
 });
 
 module.exports = router;
