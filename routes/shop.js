@@ -1,50 +1,48 @@
 // routes/shop.js
-const express     = require('express');
-const ShopItem    = require('../models/ShopItem');
+const express   = require('express');
+const ShopItem  = require('../models/ShopItem');
 const Transaction = require('../models/Transaction');
-const User        = require('../models/User');
+const User      = require('../models/User');
 const { protect, teacherOnly } = require('../middleware/auth');
 
 const router = express.Router();
 
-// ── GET /api/shop ── all active items (all users)
+// GET /api/shop
 router.get('/', protect, async (req, res) => {
   try {
     const items = await ShopItem.find({ active: true }).sort({ createdAt: -1 });
     res.json(items);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { res.status(500).json({ message: err.message }); }
 });
 
-// ── POST /api/shop ── add item (teacher only)
+// POST /api/shop — image field ham qabul qiladi
 router.post('/', protect, teacherOnly, async (req, res) => {
   try {
-    const { name, cost, category, emoji, desc, tag } = req.body;
+    const { name, cost, category, emoji, image, desc, tag } = req.body;
     if (!name || !cost) return res.status(400).json({ message: 'Name and cost required' });
 
     const item = await ShopItem.create({
-      name, cost, category, emoji, desc, tag,
+      name, cost, category,
+      emoji: emoji || '🎁',
+      image: image || null,
+      desc:  desc  || '',
+      tag:   tag   || null,
       createdBy: req.user._id,
     });
     res.status(201).json(item);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { res.status(500).json({ message: err.message }); }
 });
 
-// ── DELETE /api/shop/:id ── remove item (teacher only)
+// DELETE /api/shop/:id
 router.delete('/:id', protect, teacherOnly, async (req, res) => {
   try {
     const item = await ShopItem.findByIdAndDelete(req.params.id);
     if (!item) return res.status(404).json({ message: 'Item not found' });
     res.json({ message: 'Item deleted' });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  } catch (err) { res.status(500).json({ message: err.message }); }
 });
 
-// ── POST /api/shop/:id/buy ── student buys item
+// POST /api/shop/:id/buy
 router.post('/:id/buy', protect, async (req, res) => {
   try {
     if (req.user.role !== 'student')
@@ -60,7 +58,7 @@ router.post('/:id/buy', protect, async (req, res) => {
     student.coins -= item.cost;
     await student.save();
 
-    const tx = await Transaction.create({
+    await Transaction.create({
       student: student._id,
       label: item.name,
       type: 'spend',
@@ -68,10 +66,8 @@ router.post('/:id/buy', protect, async (req, res) => {
       category: 'shop',
     });
 
-    res.json({ student, transaction: tx });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+    res.json({ student });
+  } catch (err) { res.status(500).json({ message: err.message }); }
 });
 
 module.exports = router;
