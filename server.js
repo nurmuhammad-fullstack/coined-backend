@@ -30,7 +30,7 @@ app.use(cors({
   },
   credentials: true,
 }));
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
 // ── Routes ───────────────────────────────────────
 app.use('/api/auth',     authRoutes);
@@ -41,20 +41,12 @@ app.use('/api/quizzes',  quizRoutes);
 // ── Health check ─────────────────────────────────
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
-// ── Start Telegram Bot ───────────────────────────
-// Only start bot if not already running (check if module is already loaded)
-if (process.env.TELEGRAM_BOT_TOKEN && !global.telegramBotStarted) {
-  global.telegramBotStarted = true;
-  require('./bot');
-  console.log('🤖 Telegram Bot started!');
-} else if (!process.env.TELEGRAM_BOT_TOKEN) {
-  console.log('⚠️  TELEGRAM_BOT_TOKEN not set — bot disabled');
-} else {
-  console.log('⚠️  Bot already running, skipping...');
-}
+// ── Telegram Bot o'chirilgan ─────────────────────
+// Bot codi hozircha o'chirilgan. Keyinchalik qo'shish mumkin.
 
 // ── Start server ─────────────────────────────────
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
   console.log(`🚀 CoinEd API running on http://localhost:${PORT}`);
 });
+

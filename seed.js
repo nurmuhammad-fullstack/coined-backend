@@ -8,13 +8,7 @@ const ShopItem = require('./models/ShopItem');
 const connectDB = require('./config/db');
 
 const USERS = [
-  { name: "Ms. Johnson",   email: "teacher@school.uz", password: "admin", role: "teacher", class: "",    avatar: "MJ", color: "#f97316" },
-  { name: "Alex Thompson", email: "alex@school.uz",    password: "1234",  role: "student", class: "8-B", avatar: "AT", color: "#22c55e", coins: 1240 },
-  { name: "Maria Garcia",  email: "maria@school.uz",   password: "1234",  role: "student", class: "8-B", avatar: "MG", color: "#3b82f6", coins: 980  },
-  { name: "James Wilson",  email: "james@school.uz",   password: "1234",  role: "student", class: "8-B", avatar: "JW", color: "#f97316", coins: 760  },
-  { name: "Sophie Chen",   email: "sophie@school.uz",  password: "1234",  role: "student", class: "8-A", avatar: "SC", color: "#8b5cf6", coins: 540  },
-  { name: "Luca Rossi",    email: "luca@school.uz",    password: "1234",  role: "student", class: "8-A", avatar: "LR", color: "#ef4444", coins: 1100 },
-  { name: "Emma Brown",    email: "emma@school.uz",    password: "1234",  role: "student", class: "8-A", avatar: "EB", color: "#eab308", coins: 850  },
+  { login: "teacher", name: "Ms. Johnson",   email: "teacher@school.uz", password: "admin", role: "teacher", class: "",    avatar: "MJ", color: "#f97316" },
 ];
 
 const SHOP_ITEMS = [
@@ -48,11 +42,12 @@ const seed = async () => {
 
   console.log('\n✅ Seed complete!');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('Teacher:  teacher@school.uz / admin');
-  console.log('Student:  alex@school.uz / 1234');
+  console.log('Teacher:  teacher / admin');
+  console.log('Student:  alex / 1234');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
   process.exit(0);
 };
 
 seed().catch(err => { console.error(err); process.exit(1); });
+
