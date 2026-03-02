@@ -16,19 +16,8 @@ connectDB();
 
 // ── CORS ─────────────────────────────────────────
 app.use(cors({
-  origin: function(origin, callback) {
-    const allowed = [
-      'http://localhost:3000',
-      'http://localhost:3001',
-      process.env.CLIENT_URL,
-    ].filter(Boolean);
-    if (!origin || allowed.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(null, true); // allow all in development
-    }
-  },
-  credentials: true,
+  origin: '*',
+  credentials: false,
 }));
 app.use(express.json());
 
