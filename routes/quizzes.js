@@ -1,4 +1,4 @@
-// routes/quizzes.js
+                           // routes/quizzes.js
 const express      = require('express');
 const Quiz         = require('../models/Quiz');
 const QuizAttempt  = require('../models/QuizAttempt');
@@ -7,10 +7,6 @@ const Transaction  = require('../models/Transaction');
 const { protect, teacherOnly } = require('../middleware/auth');
 
 const router = express.Router();
-
-const getNotify = () => {
-  try { return require('../bot').notifyStudent; } catch { return null; }
-};
 
 // GET /api/quizzes — teacher: o'z testlari, student: active testlar
 router.get('/', protect, async (req, res) => {
@@ -61,22 +57,6 @@ router.post('/', protect, teacherOnly, async (req, res) => {
       teacher: req.user._id,
     });
 
-    // Notification: shu sinfga
-    const students = await User.find({ role: 'student', class: cls, telegramId: { $ne: null } });
-    const notify = getNotify();
-    if (notify) {
-      students.forEach(s => {
-        notify(s.telegramId,
-          `📝 *Yangi test!*\n\n` +
-          `📚 ${title}\n` +
-          `🏫 Sinf: ${cls || 'Hammaga'}\n` +
-          `🪙 Max: *${maxCoins || 20} coin*\n` +
-          `⏱ Vaqt: ${timeLimit || 10} min\n\n` +
-          `Platformaga kiring va testni yeching!`
-        );
-      });
-    }
-
     res.status(201).json(quiz);
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
@@ -90,7 +70,8 @@ router.get('/:id', protect, async (req, res) => {
     // Student uchun correct javoblarni yashir
     if (req.user.role === 'student') {
       const obj = quiz.toObject();
-      obj.questions = obj.questions.map(q => ({ ...q, correct: undefined }));
+      // To'g'ri javoblarni ko'rsatish (test uchun)
+      // obj.questions = obj.questions.map(q => ({ ...q, correct: undefined }));
       // Yechganmi?
       const attempt = await QuizAttempt.findOne({ quiz: quiz._id, student: req.user._id });
       obj.attempt = attempt || null;
@@ -169,20 +150,6 @@ router.post('/:id/submit', protect, async (req, res) => {
         amount: coinsEarned,
         category: 'quiz',
       });
-
-      // Telegram notification
-      if (student.telegramId) {
-        const notify = getNotify();
-        if (notify) {
-          notify(student.telegramId,
-            `🎯 *Test natijasi!*\n\n` +
-            `📝 ${quiz.title}\n` +
-            `✅ Natija: *${score}%* (${correct}/${quiz.questions.length})\n` +
-            `🪙 *+${coinsEarned} coin* qo'shildi!\n` +
-            `💰 Balans: *${student.coins} coin*`
-          );
-        }
-      }
     }
 
     res.json({ attempt, score, coinsEarned, correct, total: quiz.questions.length });
@@ -210,3 +177,4 @@ router.patch('/:id/toggle', protect, teacherOnly, async (req, res) => {
 });
 
 module.exports = router;
+

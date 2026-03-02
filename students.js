@@ -6,12 +6,6 @@ const { protect, teacherOnly } = require('../middleware/auth');
 
 const router = express.Router();
 
-// Lazy-load bot to avoid circular dependency
-const getNotify = () => {
-  try { return require('../bot').notifyStudent; }
-  catch { return null; }
-};
-
 // ── GET /api/students ────────────────────────────
 router.get('/', protect, teacherOnly, async (req, res) => {
   try {
@@ -81,31 +75,6 @@ router.post('/:id/coins', protect, teacherOnly, async (req, res) => {
       category: category || 'behavior',
     });
 
-    // ── Telegram notification ──────────────────
-    if (student.telegramId) {
-      const notify = getNotify();
-      if (notify) {
-        const teacherName = req.user.name || 'O\'qituvchi';
-        const txLabel     = label || (type === 'earn' ? 'Bonus' : 'Chegirma');
-
-        if (type === 'earn') {
-          notify(student.telegramId,
-            `🪙 *+${amount} coin!*\n\n` +
-            `📝 Sabab: *${txLabel}*\n` +
-            `👨‍🏫 O'qituvchi: ${teacherName}\n` +
-            `💰 Yangi balans: *${student.coins} coin*`
-          );
-        } else {
-          notify(student.telegramId,
-            `📉 *-${amount} coin*\n\n` +
-            `📝 Sabab: *${txLabel}*\n` +
-            `👨‍🏫 O'qituvchi: ${teacherName}\n` +
-            `💰 Yangi balans: *${student.coins} coin*`
-          );
-        }
-      }
-    }
-
     res.json({ student, transaction: tx });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -129,3 +98,4 @@ router.get('/:id/transactions', protect, async (req, res) => {
 });
 
 module.exports = router;
+

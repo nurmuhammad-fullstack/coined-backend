@@ -6,10 +6,6 @@ const { protect, teacherOnly } = require('../middleware/auth');
 
 const router = express.Router();
 
-const getNotify = () => {
-  try { return require('../bot').notifyStudent; } catch { return null; }
-};
-
 // GET /api/students/leaderboard — public (for leaderboard page)
 router.get('/leaderboard', protect, async (req, res) => {
   try {
@@ -80,20 +76,6 @@ router.post('/:id/coins', protect, teacherOnly, async (req, res) => {
       category: category || 'behavior',
     });
 
-    // ── Telegram notification ──────────────────
-    if (student.telegramId) {
-      const notify      = getNotify();
-      const teacherName = req.user.name || "O'qituvchi";
-      const txLabel     = label || (type === 'earn' ? 'Bonus' : 'Chegirma');
-
-      if (notify) {
-        const msg = type === 'earn'
-          ? `🪙 *+${amount} coin!*\n\n📝 ${txLabel}\n👨‍🏫 ${teacherName}\n💰 Balans: *${student.coins} coin*`
-          : `📉 *-${amount} coin*\n\n📝 ${txLabel}\n👨‍🏫 ${teacherName}\n💰 Balans: *${student.coins} coin*`;
-        notify(student.telegramId, msg);
-      }
-    }
-
     res.json({ student, transaction: tx });
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
@@ -112,3 +94,4 @@ router.get('/:id/transactions', protect, async (req, res) => {
 });
 
 module.exports = router;
+

@@ -81,4 +81,45 @@ router.get('/me', protect, async (req, res) => {
   res.json(req.user);
 });
 
+// ── PUT /api/auth/profile ─────────────────────────
+router.put('/profile', protect, async (req, res) => {
+  try {
+    const { name, email, password, avatar, color } = req.body;
+    const user = await User.findById(req.user._id);
+    
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    
+    // Check if email is being changed and if it's already taken
+    if (email && email !== user.email) {
+      const exists = await User.findOne({ email });
+      if (exists) return res.status(400).json({ message: 'Email already in use' });
+    }
+    
+    // Update fields
+    if (name) user.name = name;
+    if (email) user.email = email;
+    if (color) user.color = color;
+    
+    // Only update avatar if it's explicitly provided and not empty
+    // Don't overwrite uploaded image with empty string
+    if (avatar !== undefined && avatar !== null && avatar !== '') {
+      // If it's a new value (different from current), use it
+      // Otherwise keep the existing uploaded image
+      if (avatar !== user.avatar) {
+        user.avatar = avatar;
+      }
+    }
+    
+    if (password) user.password = password;
+    
+    await user.save();
+    
+    // Return fresh user data
+    const freshUser = await User.findById(req.user._id);
+    res.json(freshUser.toJSON());
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 module.exports = router;
