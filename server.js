@@ -7,6 +7,7 @@ const connectDB  = require('./config/db');
 const authRoutes    = require('./routes/auth');
 const studentRoutes = require('./routes/students');
 const shopRoutes    = require('./routes/shop');
+const quizRoutes    = require('./routes/quizzes');
 
 const app = express();
 
@@ -35,6 +36,7 @@ app.use(express.json());
 app.use('/api/auth',     authRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/shop',     shopRoutes);
+app.use('/api/quizzes',  quizRoutes);
 
 // ── Health check ─────────────────────────────────
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));

@@ -10,6 +10,17 @@ const getNotify = () => {
   try { return require('../bot').notifyStudent; } catch { return null; }
 };
 
+// GET /api/students/leaderboard — public (for leaderboard page)
+router.get('/leaderboard', protect, async (req, res) => {
+  try {
+    const students = await User.find({ role: 'student' })
+      .select('name email class avatar color coins')
+      .sort({ coins: -1 })
+      .limit(50);
+    res.json(students);
+  } catch (err) { res.status(500).json({ message: err.message }); }
+});
+
 // GET /api/students
 router.get('/', protect, teacherOnly, async (req, res) => {
   try {

@@ -34,6 +34,19 @@ router.get('/', protect, async (req, res) => {
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
 
+// GET /api/quizzes/my-attempts — student's own attempts (must be before /:id)
+router.get('/my-attempts', protect, async (req, res) => {
+  try {
+    if (req.user.role !== 'student')
+      return res.status(403).json({ message: 'Only students can view their attempts' });
+    
+    const attempts = await QuizAttempt.find({ student: req.user._id })
+      .populate('quiz', 'title subject maxCoins')
+      .sort({ createdAt: -1 });
+    res.json(attempts);
+  } catch (err) { res.status(500).json({ message: err.message }); }
+});
+
 // POST /api/quizzes — test yaratish (teacher)
 router.post('/', protect, teacherOnly, async (req, res) => {
   try {
@@ -115,9 +128,17 @@ router.post('/:id/submit', protect, async (req, res) => {
 
     const { answers, timeTaken } = req.body;
 
+    // Frontend sends [0, 2, 1, 3] format (array of selected indices)
+    // Convert to questionIndex format for scoring
+    let formattedAnswers = answers;
+    if (answers.length > 0 && typeof answers[0] === 'number') {
+      // Convert [0, 2, 1, 3] to [{ questionIndex: 0, selected: 0 }, ...]
+      formattedAnswers = answers.map((selected, questionIndex) => ({ questionIndex, selected }));
+    }
+
     // Ball hisoblash
     let correct = 0;
-    answers.forEach(a => {
+    formattedAnswers.forEach(a => {
       const q = quiz.questions[a.questionIndex];
       if (q && q.correct === a.selected) correct++;
     });
