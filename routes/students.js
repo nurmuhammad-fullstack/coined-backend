@@ -2,6 +2,7 @@
 const express     = require('express');
 const User        = require('../models/User');
 const Transaction = require('../models/Transaction');
+const Notification = require('../models/Notification');
 const { protect, teacherOnly } = require('../middleware/auth');
 
 const router = express.Router();
@@ -74,6 +75,21 @@ router.post('/:id/coins', protect, teacherOnly, async (req, res) => {
       type,
       amount:   type === 'earn' ? amount : -amount,
       category: category || 'behavior',
+    });
+
+    // Create notification for coin change
+    const notificationType = type === 'earn' ? 'bonus' : 'system';
+    const notificationTitle = type === 'earn' ? 'Coins Added! 💰' : 'Coins Deducted 💸';
+    const notificationMessage = type === 'earn' 
+      ? `You received ${amount} coins! ${label ? `(${label})` : ''}`
+      : `${amount} coins were deducted. ${label ? `(${label})` : ''}`;
+
+    await Notification.create({
+      user: student._id,
+      type: notificationType,
+      title: notificationTitle,
+      message: notificationMessage,
+      icon: type === 'earn' ? '💰' : '💸',
     });
 
     res.json({ student, transaction: tx });

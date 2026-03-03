@@ -1,9 +1,10 @@
-                           // routes/quizzes.js
+// routes/quizzes.js
 const express      = require('express');
 const Quiz         = require('../models/Quiz');
 const QuizAttempt  = require('../models/QuizAttempt');
 const User         = require('../models/User');
 const Transaction  = require('../models/Transaction');
+const Notification = require('../models/Notification');
 const { protect, teacherOnly } = require('../middleware/auth');
 
 const router = express.Router();
@@ -149,6 +150,15 @@ router.post('/:id/submit', protect, async (req, res) => {
         type: 'earn',
         amount: coinsEarned,
         category: 'quiz',
+      });
+
+      // Create notification for quiz completion
+      await Notification.create({
+        user: student._id,
+        type: 'quiz',
+        title: 'Test Completed! 🎉',
+        message: `You scored ${score}% on "${quiz.title}" and earned ${coinsEarned} coins!`,
+        icon: '🎯',
       });
     }
 

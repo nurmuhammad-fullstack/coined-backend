@@ -3,6 +3,7 @@ const express   = require('express');
 const ShopItem  = require('../models/ShopItem');
 const Transaction = require('../models/Transaction');
 const User      = require('../models/User');
+const Notification = require('../models/Notification');
 const { protect, teacherOnly } = require('../middleware/auth');
 
 const router = express.Router();
@@ -64,6 +65,15 @@ router.post('/:id/buy', protect, async (req, res) => {
       type: 'spend',
       amount: -item.cost,
       category: 'shop',
+    });
+
+    // Create notification for purchase
+    await Notification.create({
+      user: student._id,
+      type: 'shop',
+      title: 'Purchase Successful! 🛍️',
+      message: `You bought "${item.name}" for ${item.cost} coins!`,
+      icon: item.emoji || '🎁',
     });
 
     res.json({ student });
