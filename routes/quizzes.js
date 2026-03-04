@@ -17,13 +17,24 @@ router.get('/', protect, async (req, res) => {
       quizzes = await Quiz.find({ teacher: req.user._id }).sort({ createdAt: -1 });
     } else {
       // Student uchun: active + o'z sinfi
-      quizzes = await Quiz.find({ active: true }).sort({ createdAt: -1 }).select('-questions.correct');
+      // Use manual projection to properly hide correct answers
+      const allQuizzes = await Quiz.find({ active: true }).sort({ createdAt: -1 });
+      // Map to remove correct answers from questions
+      quizzes = allQuizzes.map(q => {
+        const obj = q.toObject();
+        obj.questions = obj.questions.map(question => ({
+          question: question.question,
+          options: question.options
+          // correct answer is NOT included
+        }));
+        return obj;
+      });
       // Har bir quiz uchun yechganmi yo'qmi
       const attempts = await QuizAttempt.find({ student: req.user._id }).select('quiz score coinsEarned');
       const attemptMap = {};
       attempts.forEach(a => { attemptMap[a.quiz.toString()] = a; });
       quizzes = quizzes.map(q => ({
-        ...q.toObject(),
+        ...q,
         attempt: attemptMap[q._id.toString()] || null,
       }));
     }
