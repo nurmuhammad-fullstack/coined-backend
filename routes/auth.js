@@ -65,6 +65,7 @@ router.post('/create-student', protect, teacherOnly, async (req, res) => {
       password,
       role: 'student',
       class: cls || '',
+      teacher: req.user._id,  // Link student to the teacher who created them
       avatar: avatar || name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
       color: color || '#22c55e',
       coins: 0,

@@ -8,6 +8,7 @@ const UserSchema = new mongoose.Schema({
   password: { type: String, required: true, minlength: 4 },
   role:     { type: String, enum: ['student', 'teacher'], default: 'student' },
   class:    { type: String, default: '' },   // e.g. "8-B"
+  teacher:  { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },  // Link to teacher
   avatar:   { type: String, default: '' },   // initials e.g. "AT"
   color:    { type: String, default: '#22c55e' },
   coins:    { type: Number, default: 0 },

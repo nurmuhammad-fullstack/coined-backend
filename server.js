@@ -5,6 +5,8 @@ const cors       = require('cors');
 const multer     = require('multer');
 const path       = require('path');
 const fs         = require('fs');
+const http       = require('http');
+const { Server } = require('socket.io');
 const connectDB  = require('./config/db');
 
 const authRoutes    = require('./routes/auth');
@@ -12,8 +14,21 @@ const studentRoutes = require('./routes/students');
 const shopRoutes    = require('./routes/shop');
 const quizRoutes    = require('./routes/quizzes');
 const notifRoutes   = require('./routes/notifications');
+const classRoutes   = require('./routes/classes');
+const analyticsRoutes = require('./routes/analytics');
+const chatRoutes   = require('./routes/chat');
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST']
+  }
+});
+
+// Store io instance for use in routes
+app.set('io', io);
 
 // ── Connect MongoDB ──────────────────────────────
 connectDB();
@@ -64,6 +79,9 @@ app.use('/api/students',    studentRoutes);
 app.use('/api/shop',        shopRoutes);
 app.use('/api/quizzes',     quizRoutes);
 app.use('/api/notifications', notifRoutes);
+app.use('/api/classes',     classRoutes);
+app.use('/api/analytics',   analyticsRoutes);
+app.use('/api/chat',        chatRoutes);
 
 // ── Profile image upload endpoint ───────────────
 app.post('/api/auth/upload-avatar', require('./middleware/auth').protect, upload.single('avatar'), async (req, res) => {
@@ -103,8 +121,13 @@ if (process.env.TELEGRAM_BOT_TOKEN) {
   console.log('⚠️  TELEGRAM_BOT_TOKEN not set — bot disabled');
 }
 
+// ── Initialize Socket.io ─────────────────────────
+const { initializeSocket } = require('./services/socket');
+initializeSocket(io);
+console.log('🔌 Socket.io initialized!');
+
 // ── Start server ─────────────────────────────────
 const PORT = process.env.PORT || 5001;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`🚀 CoinEd API running on http://localhost:${PORT}`);
 });

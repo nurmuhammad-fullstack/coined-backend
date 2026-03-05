@@ -4,10 +4,35 @@ const TelegramBot = require('node-telegram-bot-api');
 const mongoose    = require('mongoose');
 const bcrypt      = require('bcryptjs');
 const User        = require('./models/User');
+const express     = require('express');
 
 const BOT_TOKEN  = process.env.TELEGRAM_BOT_TOKEN;
 const WEBAPP_URL = process.env.WEBAPP_URL || 'https://coin-system-eight.vercel.app';
-const bot = new TelegramBot(BOT_TOKEN, { polling: true });
+const PORT       = process.env.BOT_PORT || 5002;
+
+// Check if we're in webhook mode or polling mode
+const USE_WEBHOOK = process.env.USE_WEBHOOK === 'true';
+
+// Create bot instance based on mode
+let bot;
+if (USE_WEBHOOK) {
+  // Webhook mode - more reliable, no 409 conflicts
+  bot = new TelegramBot(BOT_TOKEN);
+} else {
+  // Polling mode with error handling
+  bot = new TelegramBot(BOT_TOKEN, { polling: true });
+  
+  // Handle polling errors gracefully
+  bot.on('polling_error', (error) => {
+    console.error('❌ Polling error:', error.code, error.message);
+    if (error.code === 'ETELEGRAM' && error.message.includes('409')) {
+      console.log('⚠️ 409 Conflict detected - stopping polling to prevent conflicts');
+      bot.stopPolling().then(() => {
+        console.log('✅ Polling stopped. Consider using webhook mode for production.');
+      });
+    }
+  });
+}
 
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('✅ Bot connected to MongoDB'))
@@ -211,4 +236,35 @@ async function notifyStudent(telegramId, message) {
 }
 
 module.exports = { bot, notifyStudent };
-console.log('🤖 CoinEd Telegram Bot started!');
+
+// ── Webhook Mode Setup (for production to avoid 409 conflicts) ──
+if (USE_WEBHOOK) {
+  const app = express();
+  app.use(express.json());
+  
+  const botWebhookPath = `/bot${BOT_TOKEN}`;
+  
+  // Set webhook
+  const WEBHOOK_URL = process.env.WEBHOOK_URL;
+  if (WEBHOOK_URL) {
+    bot.setWebHook(`${WEBHOOK_URL}${botWebhookPath}`)
+      .then(() => {
+        console.log(`✅ Webhook set to: ${WEBHOOK_URL}${botWebhookPath}`);
+      })
+      .catch(err => console.error('❌ Webhook error:', err));
+  }
+  
+  // Handle webhook updates
+  app.post(botWebhookPath, (req, res) => {
+    bot.processUpdate(req.body);
+    res.send('OK');
+  });
+  
+  app.listen(PORT, () => {
+    console.log(`🤖 CoinEd Telegram Bot running on webhook port ${PORT}`);
+    console.log(`📍 Webhook URL: ${WEBHOOK_URL}${botWebhookPath}`);
+  });
+} else {
+  console.log('🤖 CoinEd Telegram Bot started in polling mode!');
+  console.log('💡 Set USE_WEBHOOK=true and WEBHOOK_URL for production');
+}

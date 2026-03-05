@@ -21,7 +21,24 @@ router.get('/leaderboard', protect, async (req, res) => {
 // GET /api/students
 router.get('/', protect, teacherOnly, async (req, res) => {
   try {
-    const students = await User.find({ role: 'student' }).select('-password').sort({ coins: -1 });
+    // Only return students that belong to this teacher
+    const students = await User.find({ role: 'student', teacher: req.user._id }).select('-password').sort({ coins: -1 });
+    res.json(students);
+  } catch (err) { res.status(500).json({ message: err.message }); }
+});
+
+// GET /api/students/all - Get all students for teacher (including legacy)
+router.get('/all', protect, teacherOnly, async (req, res) => {
+  try {
+    // Get students that belong to this teacher OR have no teacher assigned (legacy students)
+    const students = await User.find({ 
+      role: 'student',
+      $or: [
+        { teacher: req.user._id },
+        { teacher: null },
+        { teacher: { $exists: false } }
+      ]
+    }).select('-password').sort({ name: 1 });
     res.json(students);
   } catch (err) { res.status(500).json({ message: err.message }); }
 });

@@ -17,15 +17,15 @@ router.get('/', protect, async (req, res) => {
       quizzes = await Quiz.find({ teacher: req.user._id }).sort({ createdAt: -1 });
     } else {
       // Student uchun: active + o'z sinfi
-      // Use manual projection to properly hide correct answers
+      // Include correct answers for quiz feedback
       const allQuizzes = await Quiz.find({ active: true }).sort({ createdAt: -1 });
-      // Map to remove correct answers from questions
+      // Map to include correct answers for students (needed for answer validation)
       quizzes = allQuizzes.map(q => {
         const obj = q.toObject();
         obj.questions = obj.questions.map(question => ({
           question: question.question,
-          options: question.options
-          // correct answer is NOT included
+          options: question.options,
+          correct: question.correct
         }));
         return obj;
       });
@@ -121,20 +121,20 @@ router.post('/:id/submit', protect, async (req, res) => {
 
     const { answers, timeTaken } = req.body;
 
-    // Frontend sends [0, 2, 1, 3] format (array of selected indices)
-    // Convert to questionIndex format for scoring
-    let formattedAnswers = answers;
-    if (answers.length > 0 && typeof answers[0] === 'number') {
-      // Convert [0, 2, 1, 3] to [{ questionIndex: 0, selected: 0 }, ...]
-      formattedAnswers = answers.map((selected, questionIndex) => ({ questionIndex, selected }));
-    }
-
-    // Ball hisoblash
+    // Frontend sends [0, 2, 1, 3] format (array of selected indices for each question in order)
+    // answers[0] = selected answer index for question 0
+    // answers[1] = selected answer index for question 1
+    // etc.
+    
+    // Ball hisoblash - directly compare array indices
     let correct = 0;
-    formattedAnswers.forEach(a => {
-      const q = quiz.questions[a.questionIndex];
-      if (q && q.correct === a.selected) correct++;
-    });
+    for (let i = 0; i < answers.length; i++) {
+      const selectedAnswer = Number(answers[i]);
+      const correctAnswer = Number(quiz.questions[i].correct);
+      if (selectedAnswer === correctAnswer) {
+        correct++;
+      }
+    }
 
     const score      = Math.round((correct / quiz.questions.length) * 100);
     const coinsEarned = Math.round(quiz.maxCoins * score / 100);
@@ -173,7 +173,17 @@ router.post('/:id/submit', protect, async (req, res) => {
       });
     }
 
-    res.json({ attempt, score, coinsEarned, correct, total: quiz.questions.length });
+    // To'g'ri javoblarni ham qaytarish (frontend uchun)
+    const correctAnswers = quiz.questions.map(q => q.correct);
+    
+    res.json({ 
+      attempt, 
+      score, 
+      coinsEarned, 
+      correct, 
+      total: quiz.questions.length,
+      correctAnswers 
+    });
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
 
