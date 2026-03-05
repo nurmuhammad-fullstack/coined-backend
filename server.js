@@ -17,6 +17,7 @@ const notifRoutes   = require('./routes/notifications');
 const classRoutes   = require('./routes/classes');
 const analyticsRoutes = require('./routes/analytics');
 const chatRoutes   = require('./routes/chat');
+const contactRoutes = require('./routes/contact');
 
 const app = express();
 const server = http.createServer(app);
@@ -35,8 +36,10 @@ connectDB();
 
 // ── CORS ─────────────────────────────────────────
 app.use(cors({
-  origin: '*',
-  credentials: false,
+  origin: ['http://localhost:3000', 'http://localhost:5001', 'http://127.0.0.1:3000'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 
@@ -82,6 +85,7 @@ app.use('/api/notifications', notifRoutes);
 app.use('/api/classes',     classRoutes);
 app.use('/api/analytics',   analyticsRoutes);
 app.use('/api/chat',        chatRoutes);
+app.use('/api/contact',     contactRoutes);
 
 // ── Profile image upload endpoint ───────────────
 app.post('/api/auth/upload-avatar', require('./middleware/auth').protect, upload.single('avatar'), async (req, res) => {
