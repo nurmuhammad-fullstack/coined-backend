@@ -52,27 +52,39 @@ router.post('/create-student', protect, teacherOnly, async (req, res) => {
   try {
     const { name, email, password, class: cls, avatar, color } = req.body;
 
+    console.log('Create student request body:', JSON.stringify(req.body));
+
     if (!name || !email || !password) {
-      return res.status(400).json({ message: 'Name, email and password are required' });
+      const missing = [];
+      if (!name) missing.push('name');
+      if (!email) missing.push('email');
+      if (!password) missing.push('password');
+      console.log('Missing required fields:', missing);
+      return res.status(400).json({ message: `Missing required fields: ${missing.join(', ')}` });
     }
 
-    const exists = await User.findOne({ email });
-    if (exists) return res.status(400).json({ message: 'Email already registered' });
+    const exists = await User.findOne({ email: email.toLowerCase() });
+    if (exists) {
+      console.log('Email already exists:', email);
+      return res.status(400).json({ message: 'Email already registered' });
+    }
 
     const user = await User.create({
-      name,
-      email,
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
       password,
       role: 'student',
       class: cls || '',
-      teacher: req.user._id,  // Link student to the teacher who created them
+      teacher: req.user._id,
       avatar: avatar || name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
       color: color || '#22c55e',
       coins: 0,
     });
 
+    console.log('Student created successfully:', user._id);
     res.status(201).json({ user });
   } catch (err) {
+    console.error('Create student error:', err);
     res.status(500).json({ message: err.message });
   }
 });
