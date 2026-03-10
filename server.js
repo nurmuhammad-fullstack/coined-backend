@@ -13,33 +13,22 @@ const app = express();
 
 connectDB();
 
-// ✅ CORS — Vercel va barcha originlarga ruxsat
-app.use(cors({
+const corsOptions = {
   origin: function(origin, callback) {
-    // Ruxsat berilgan domenlar
-    const allowed = [
-      'http://localhost:3000',
-      'http://localhost:3001',
-      'https://coined-frontent.vercel.app',
-      'https://coined-frontend.vercel.app',
-      process.env.CLIENT_URL,
-    ].filter(Boolean);
-
-    // Origin yo'q (curl, Postman) yoki ruxsat berilgan
-    if (!origin || allowed.includes(origin) || origin.endsWith('.vercel.app')) {
+    if (!origin || origin.endsWith('.vercel.app') || origin.includes('localhost')) {
+      callback(null, true);
+    } else if (process.env.CLIENT_URL && origin === process.env.CLIENT_URL) {
       callback(null, true);
     } else {
-      callback(null, true); // Development uchun barchasiga ruxsat
+      callback(null, true); // development: barchasiga ruxsat
     }
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-}));
+};
 
-// ✅ OPTIONS preflight uchun
-app.options('*', cors());
-
+app.use(cors(corsOptions));
 app.use(express.json());
 
 app.use('/api/auth',     authRoutes);
