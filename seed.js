@@ -9,10 +9,7 @@ const connectDB = require('./config/db');
 
 const USERS = [
   { name: "Nurmuhammad",   email: "teacher@school.uz", password: "admin", role: "teacher", class: "",    avatar: "MJ", color: "#f97316" },
-  { name: "Burxon", email: "burxon@school.uz",    password: "1234",  role: "student", class: "11-A", avatar: "AT", color: "#22c55e", coins: 0 },
-  { name: "MuhammadAli",  email: "muhammad@school.uz",   password: "1234",  role: "student", class: "11-A", avatar: "MG", color: "#3b82f6", coins: 0  },
-  { name: "Umar",  email: "umar@school.uz",   password: "1234",  role: "student", class: "11-A", avatar: "MG", color: "#3b82f6", coins: 0  },
-
+  { name: "TestUser",  email: "test@school.uz",   password: "1234",  role: "student", class: "11-A", avatar: "MG", color: "#3b82f6", coins: 0  },
 ];
 
 const SHOP_ITEMS = [
