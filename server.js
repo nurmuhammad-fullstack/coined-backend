@@ -4,10 +4,15 @@ const express   = require('express');
 const cors      = require('cors');
 const connectDB = require('./config/db');
 
-const authRoutes    = require('./routes/auth');
-const studentRoutes = require('./routes/students');
-const shopRoutes    = require('./routes/shop');
-const quizRoutes    = require('./routes/quizzes');
+const authRoutes          = require('./routes/auth');
+const studentRoutes       = require('./routes/students');
+const shopRoutes          = require('./routes/shop');
+const quizRoutes          = require('./routes/quizzes');
+const chatRoutes          = require('./routes/chat');
+const notificationRoutes  = require('./routes/notifications');
+const analyticsRoutes     = require('./routes/analytics');
+const classesRoutes       = require('./routes/classes');
+const contactRoutes       = require('./routes/contact');
 
 const app = express();
 
@@ -20,7 +25,7 @@ const corsOptions = {
     } else if (process.env.CLIENT_URL && origin === process.env.CLIENT_URL) {
       callback(null, true);
     } else {
-      callback(null, true); // development: barchasiga ruxsat
+      callback(null, true);
     }
   },
   credentials: true,
@@ -31,10 +36,15 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
-app.use('/api/auth',     authRoutes);
-app.use('/api/students', studentRoutes);
-app.use('/api/shop',     shopRoutes);
-app.use('/api/quizzes',  quizRoutes);
+app.use('/api/auth',          authRoutes);
+app.use('/api/students',      studentRoutes);
+app.use('/api/shop',          shopRoutes);
+app.use('/api/quizzes',       quizRoutes);
+app.use('/api/chat',          chatRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/analytics',     analyticsRoutes);
+app.use('/api/classes',       classesRoutes);
+app.use('/api/contact',       contactRoutes);
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
