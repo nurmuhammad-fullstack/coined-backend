@@ -13,6 +13,7 @@ const notificationRoutes  = require('./routes/notifications');
 const analyticsRoutes     = require('./routes/analytics');
 const classesRoutes       = require('./routes/classes');
 const contactRoutes       = require('./routes/contact');
+const scheduleRoutes      = require('./routes/schedule');
 
 const app = express();
 
@@ -46,6 +47,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/analytics',     analyticsRoutes);
 app.use('/api/classes',       classesRoutes);
 app.use('/api/contact',       contactRoutes);
+app.use('/api/schedule',      scheduleRoutes);
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 

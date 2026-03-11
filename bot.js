@@ -5,6 +5,7 @@ const mongoose    = require('mongoose');
 const bcrypt      = require('bcryptjs');
 const User        = require('./models/User');
 const express     = require('express');
+const { startScheduler } = require('./services/scheduler');
 
 const BOT_TOKEN  = process.env.TELEGRAM_BOT_TOKEN;
 const WEBAPP_URL = process.env.WEBAPP_URL || 'https://coin-system-eight.vercel.app';
@@ -35,7 +36,11 @@ if (USE_WEBHOOK) {
 }
 
 mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('✅ Bot connected to MongoDB'))
+  .then(() => {
+    console.log('✅ Bot connected to MongoDB');
+    // Start the schedule notification scheduler
+    startScheduler(bot);
+  })
   .catch(err => console.error('❌ MongoDB error:', err));
 
 // Pending login state
