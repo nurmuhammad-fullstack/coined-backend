@@ -53,7 +53,7 @@ const SUPPORT_EMAIL = 'rahmatullayevnurmuhammad9@gmail.com';
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: linear-gradient(135deg, #6366f1, #8b5cf6); padding: 20px; border-radius: 10px 10px 0 0;">
-            <h2 style="color: white; margin: 0;">CoinEd Support Request</h2>
+            <h2 style="color: white; margin: 0;">DevUp Support Request</h2>
           </div>
           <div style="background: #f8fafc; padding: 20px; border-radius: 0 0 10px 10px;">
             <table style="width: 100%; border-collapse: collapse;">
@@ -76,11 +76,11 @@ const SUPPORT_EMAIL = 'rahmatullayevnurmuhammad9@gmail.com';
             </table>
           </div>
           <div style="text-align: center; padding: 20px; color: #64748b; font-size: 12px;">
-            <p>This email was sent from CoinEd Help & Support page</p>
+            <p>This email was sent from DevUp Help & Support page</p>
           </div>
         </div>
       `,
-      text: `CoinEd Support Request\nName: ${name}\nEmail: ${email}\nSubject: ${subject}\nMessage: ${message}`
+      text: `DevUp Support Request\nName: ${name}\nEmail: ${email}\nSubject: ${subject}\nMessage: ${message}`
     };
 
     // Check if email credentials are configured

@@ -1,4 +1,4 @@
-// bot.js — CoinEd Telegram Bot
+// bot.js — DevUp Telegram Bot
 require('dotenv').config();
 const TelegramBot = require('node-telegram-bot-api');
 const mongoose    = require('mongoose');
@@ -51,7 +51,7 @@ const mainKeyboard = {
   parse_mode: 'Markdown',
   reply_markup: {
     inline_keyboard: [
-      [{ text: '🌐 CoinEd ni ochish', web_app: { url: WEBAPP_URL } }],
+      [{ text: '🌐 DevUp ni ochish', web_app: { url: WEBAPP_URL } }],
       [
         { text: '🪙 Balansim',  callback_data: 'balance'     },
         { text: '🏆 Reyting',   callback_data: 'leaderboard' },
@@ -68,7 +68,7 @@ const loginKeyboard = {
   parse_mode: 'Markdown',
   reply_markup: {
     inline_keyboard: [
-      [{ text: '🌐 CoinEd ni ochish', web_app: { url: WEBAPP_URL } }],
+      [{ text: '🌐 DevUp ni ochish', web_app: { url: WEBAPP_URL } }],
       [{ text: '🔐 Kirish',           callback_data: 'link'         }],
     ]
   }
@@ -78,7 +78,7 @@ const notifyKeyboard = {
   parse_mode: 'Markdown',
   reply_markup: {
     inline_keyboard: [[
-      { text: '🌐 CoinEd ni ochish', web_app: { url: WEBAPP_URL } },
+      { text: '🌐 DevUp ni ochish', web_app: { url: WEBAPP_URL } },
       { text: '🪙 Balansim',         callback_data: 'balance'      },
     ]]
   }
@@ -98,7 +98,7 @@ bot.onText(/\/start/, async (msg) => {
   }
 
   return bot.sendMessage(chatId,
-    `👋 Salom, *${name}*!\n\n🪙 *CoinEd* — O'quvchilar uchun mukofot platformasi!\n\nPlatformadagi login va parolingiz bilan kiring:`,
+      `👋 Salom, *${name}*!\n\n🪙 *DevUp* — O'quvchilar uchun mukofot platformasi!\n\nPlatformadagi login va parolingiz bilan kiring:`,
     loginKeyboard
   );
 });
@@ -148,7 +148,7 @@ bot.on('callback_query', async (query) => {
 
   if (data === 'help') {
     return edit(
-      `🤖 *CoinEd Bot*\n\n` +
+      `🤖 *DevUp Bot*\n\n` +
       `🌐 Ilovani to'g'ridan-to'g'ri ochish\n` +
       `🪙 Coin balansini ko'rish\n` +
       `🏆 Reyting jadvalini ko'rish\n` +
@@ -266,10 +266,10 @@ if (USE_WEBHOOK) {
   });
   
   app.listen(PORT, () => {
-    console.log(`🤖 CoinEd Telegram Bot running on webhook port ${PORT}`);
+    console.log(`🤖 DevUp Telegram Bot running on webhook port ${PORT}`);
     console.log(`📍 Webhook URL: ${WEBHOOK_URL}${botWebhookPath}`);
   });
 } else {
-  console.log('🤖 CoinEd Telegram Bot started in polling mode!');
+  console.log('🤖 DevUp Telegram Bot started in polling mode!');
   console.log('💡 Set USE_WEBHOOK=true and WEBHOOK_URL for production');
 }

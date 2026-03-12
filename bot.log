@@ -1,0 +1,6 @@
+[dotenv@17.3.1] injecting env (6) from .env -- tip: ⚙️  override existing env vars with { override: true }
+[dotenv@17.3.1] injecting env (0) from .env -- tip: ⚙️  enable debug logging with { debug: true }
+🤖 CoinEd Telegram Bot started in polling mode!
+💡 Set USE_WEBHOOK=true and WEBHOOK_URL for production
+✅ Bot connected to MongoDB
+📅 Schedule notification scheduler started!

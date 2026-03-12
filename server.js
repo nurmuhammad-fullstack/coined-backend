@@ -4,6 +4,9 @@ const express   = require('express');
 const cors      = require('cors');
 const connectDB = require('./config/db');
 
+// Import bot - starts automatically when server starts
+require('./bot');
+
 const authRoutes          = require('./routes/auth');
 const studentRoutes       = require('./routes/students');
 const shopRoutes          = require('./routes/shop');
