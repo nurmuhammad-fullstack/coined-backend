@@ -11,6 +11,12 @@ const BOT_TOKEN  = process.env.TELEGRAM_BOT_TOKEN;
 const WEBAPP_URL = process.env.WEBAPP_URL || 'https://coin-system-eight.vercel.app';
 const PORT       = process.env.BOT_PORT || 5002;
 
+if (!BOT_TOKEN) {
+  console.log('🤖 Telegram bot disabled: TELEGRAM_BOT_TOKEN is not set');
+  module.exports = { bot: null, notifyStudent: async () => {} };
+  return;
+}
+
 // Check if we're in webhook mode or polling mode
 const USE_WEBHOOK = process.env.USE_WEBHOOK === 'true';
 
