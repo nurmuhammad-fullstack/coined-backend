@@ -38,7 +38,7 @@ async function notifyStudents(bot, className, message) {
               reply_markup: {
                 inline_keyboard: [
                   [
-                    { text: '🌐 DevUp ni ochish', web_app: { url: process.env.WEBAPP_URL || 'https://coin-system-eight.vercel.app' } }
+                    { text: '🌐 CoinEd ni ochish', web_app: { url: process.env.WEBAPP_URL } }
                   ]
                 ]
               }

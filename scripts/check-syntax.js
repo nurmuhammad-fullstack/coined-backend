@@ -4,10 +4,8 @@ const { spawnSync } = require('child_process');
 
 const root = path.resolve(__dirname, '..');
 const includeDirs = ['config', 'middleware', 'models', 'routes', 'services', 'scripts'];
-const includeFiles = ['server.js', 'bot.js', 'seed.js', 'delete-students.js', 'students.js', 'User.js', 'ecosystem.config.js'];
-const excludedFiles = new Set([
-  path.join(root, 'services', 'api.js'),
-]);
+const includeFiles = ['server.js', 'bot.js', 'ecosystem.config.js'];
+const excludedFiles = new Set();
 
 const files = [];
 

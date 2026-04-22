@@ -1,23 +1,21 @@
 const express = require('express');
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
+
 const router = express.Router();
 
-// Create transporter for sending emails
-const createTransporter = () => {
-  return nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
-    }
-  });
-};
+const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || null;
+const FROM_EMAIL = 'no-reply@novdaunion.uz';
+const FROM_NAME = 'CoinEd';
 
-// Check if email is properly configured
+const createResendClient = () => new Resend(process.env.RESEND_API_KEY);
+
 const isEmailConfigured = () => {
-  return process.env.EMAIL_USER && 
-         process.env.EMAIL_PASS && 
-         !process.env.EMAIL_USER.includes('your-email');
+  return Boolean(
+    SUPPORT_EMAIL &&
+    process.env.RESEND_API_KEY &&
+    !process.env.RESEND_API_KEY.includes('replace') &&
+    !process.env.RESEND_API_KEY.includes('your_')
+  );
 };
 
 // POST /api/contact/email - Send contact email
@@ -25,29 +23,24 @@ router.post('/email', async (req, res) => {
   try {
     const { name, email, subject, message } = req.body;
 
-    // Validate required fields
     if (!name || !email || !subject || !message) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        message: 'All fields are required: name, email, subject, message' 
+        message: 'All fields are required: name, email, subject, message'
       });
     }
 
-    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        message: 'Invalid email format' 
+        message: 'Invalid email format'
       });
     }
 
-    // Support email
-const SUPPORT_EMAIL = 'rahmatullayevnurmuhammad9@gmail.com';
-    
-    const mailOptions = {
-      from: process.env.EMAIL_USER || 'support@coined.edu',
-      to: SUPPORT_EMAIL,
+    const emailPayload = {
+      from: `${FROM_NAME} <${FROM_EMAIL}>`,
+      to: [SUPPORT_EMAIL],
       replyTo: email,
       subject: `[CoinEd Contact] ${subject} - ${name}`,
       html: `
@@ -76,56 +69,53 @@ const SUPPORT_EMAIL = 'rahmatullayevnurmuhammad9@gmail.com';
             </table>
           </div>
           <div style="text-align: center; padding: 20px; color: #64748b; font-size: 12px;">
-            <p>This email was sent from DevUp Help & Support page</p>
+            <p>This email was sent from the CoinEd Help & Support page</p>
           </div>
         </div>
       `,
-      text: `DevUp Support Request\nName: ${name}\nEmail: ${email}\nSubject: ${subject}\nMessage: ${message}`
+      text: `CoinEd Support Request\nName: ${name}\nEmail: ${email}\nSubject: ${subject}\nMessage: ${message}`
     };
 
-    // Check if email credentials are configured
     if (!isEmailConfigured()) {
-      // Demo mode - log email
-      console.log('📧 Email would be sent:', {
-        to: SUPPORT_EMAIL,
-        from: email,
-        subject: subject,
-        message: message
+      console.log('Email would be sent:', {
+        to: SUPPORT_EMAIL || 'support-email-not-configured',
+        from: FROM_EMAIL,
+        replyTo: email,
+        subject,
+        message
       });
-      
-      return res.status(200).json({ 
-        success: true, 
+
+      return res.status(200).json({
+        success: true,
         message: 'Email sent successfully! (Demo mode)',
         demo: true
       });
     }
 
-    // Send the email
-    const transporter = createTransporter();
-    await transporter.sendMail(mailOptions);
+    const resend = createResendClient();
+    await resend.emails.send(emailPayload);
 
-    res.status(200).json({ 
-      success: true, 
-      message: 'Email sent successfully!' 
+    res.status(200).json({
+      success: true,
+      message: 'Email sent successfully!'
     });
-
   } catch (error) {
     console.error('Email sending error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to send email. Please try again.' 
+    res.status(500).json({
+      success: false,
+      message: 'Failed to send email. Please try again.'
     });
   }
 });
 
 // GET /api/contact - Health check
 router.get('/', (req, res) => {
-  res.json({ 
-    status: 'ok', 
+  res.json({
+    status: 'ok',
     message: 'Contact API is running',
-email: 'rahmatullayevnurmuhammad9@gmail.com'
+    email: SUPPORT_EMAIL,
+    configured: Boolean(SUPPORT_EMAIL)
   });
 });
 
 module.exports = router;
-

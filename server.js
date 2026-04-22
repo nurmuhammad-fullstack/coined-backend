@@ -24,6 +24,17 @@ const scheduleRoutes = require('./routes/schedule');
 const app = express();
 const server = http.createServer(app);
 
+const requireEnv = (keys) => {
+  const missing = keys.filter((key) => !process.env[key]);
+  if (missing.length > 0) {
+    throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+  }
+};
+
+if (process.env.NODE_ENV === 'production') {
+  requireEnv(['MONGODB_URI', 'JWT_SECRET', 'CLIENT_URL', 'WEBAPP_URL']);
+}
+
 connectDB();
 
 if (process.env.NODE_ENV === 'production') {
@@ -86,5 +97,5 @@ app.set('io', io);
 
 const PORT = process.env.PORT || 5001;
 server.listen(PORT, () => {
-  console.log(`CoinEd API running on http://localhost:${PORT}`);
+  console.log(`CoinEd API running on port ${PORT}`);
 });

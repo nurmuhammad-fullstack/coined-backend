@@ -16,7 +16,11 @@ const initializeSocket = (io) => {
         return next(new Error('Authentication required'));
       }
 
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'coined-secret');
+      if (!process.env.JWT_SECRET) {
+        return next(new Error('Server authentication is not configured'));
+      }
+
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
       const user = await User.findById(decoded.id).select('_id name role');
       
       if (!user) {
