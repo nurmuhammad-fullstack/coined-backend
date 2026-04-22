@@ -9,6 +9,19 @@ const router = express.Router();
 
 // Helper to get io instance from app
 const getIO = (req) => req.app.get('io');
+const canUsersChat = (currentUser, partner) => {
+  if (!partner) return false;
+
+  if (currentUser.role === 'student') {
+    return partner.role === 'teacher' && currentUser.teacher?.toString() === partner._id.toString();
+  }
+
+  if (currentUser.role === 'teacher') {
+    return partner.role === 'student' && partner.teacher?.toString() === currentUser._id.toString();
+  }
+
+  return false;
+};
 
 // ==================== CONVERSATIONS ====================
 
@@ -153,9 +166,8 @@ router.post('/conversations', protect, async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Don't allow students to message each other
-    if (req.user.role === 'student' && partner.role === 'student') {
-      return res.status(403).json({ message: 'Students cannot message each other' });
+    if (!canUsersChat(req.user, partner)) {
+      return res.status(403).json({ message: 'You can only message linked teacher/student accounts' });
     }
 
     // Check if conversation already exists (direct message)
@@ -336,9 +348,8 @@ router.post('/messages/:conversationId', protect, async (req, res) => {
         return res.status(404).json({ message: 'Receiver not found' });
       }
 
-      // Don't allow students to message each other
-      if (req.user.role === 'student' && receiver.role === 'student') {
-        return res.status(403).json({ message: 'Students cannot message each other' });
+      if (!canUsersChat(req.user, receiver)) {
+        return res.status(403).json({ message: 'You can only message linked teacher/student accounts' });
       }
 
       // Create message in old model

@@ -11,7 +11,21 @@ const router = express.Router();
 // GET /api/shop
 router.get('/', protect, async (req, res) => {
   try {
-    const items = await ShopItem.find({ active: true }).sort({ createdAt: -1 });
+    let items;
+
+    if (req.user.role === 'teacher') {
+      items = await ShopItem.find({ active: true, createdBy: req.user._id }).sort({ createdAt: -1 });
+    } else {
+      items = await ShopItem.find({
+        active: true,
+        $or: [
+          { createdBy: req.user.teacher || null },
+          { createdBy: null },
+          { createdBy: { $exists: false } },
+        ],
+      }).sort({ createdAt: -1 });
+    }
+
     res.json(items);
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
@@ -37,7 +51,7 @@ router.post('/', protect, teacherOnly, async (req, res) => {
 // DELETE /api/shop/:id
 router.delete('/:id', protect, teacherOnly, async (req, res) => {
   try {
-    const item = await ShopItem.findByIdAndDelete(req.params.id);
+    const item = await ShopItem.findOneAndDelete({ _id: req.params.id, createdBy: req.user._id });
     if (!item) return res.status(404).json({ message: 'Item not found' });
     res.json({ message: 'Item deleted' });
   } catch (err) { res.status(500).json({ message: err.message }); }
@@ -61,6 +75,7 @@ router.post('/:id/buy', protect, async (req, res) => {
 
     await Transaction.create({
       student: student._id,
+      teacher: student.teacher || undefined,
       label: item.name,
       type: 'spend',
       amount: -item.cost,
