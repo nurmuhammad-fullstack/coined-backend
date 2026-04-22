@@ -45,8 +45,8 @@ WEBAPP_URL=https://coined.novdaunion.uz
 
 Optional keys:
 
-- `EMAIL_USER`
-- `EMAIL_PASS`
+- `RESEND_API_KEY`
+- `SUPPORT_EMAIL`
 - `TELEGRAM_BOT_TOKEN`
 - `BOT_PORT`
 - `USE_WEBHOOK`
@@ -71,7 +71,7 @@ Example values:
 
 Backend API domain for this deployment:
 
-- `https://api.coined.novdaunion.uz`
+- `https://coinedsrvr.novdaunion.uz`
 
 Frontend domain for this deployment:
 
