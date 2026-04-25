@@ -1,9 +1,9 @@
-# fly.toml app configuration file generated for coined-backend on 2026-04-25T09:51:35Z
+# fly.toml app configuration file generated for coined-backend-gy0kxg on 2026-04-25T14:54:04Z
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'coined-backend'
+app = 'coined-backend-gy0kxg'
 primary_region = 'ams'
 
 [build]
