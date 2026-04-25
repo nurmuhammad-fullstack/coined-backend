@@ -81,6 +81,26 @@ router.post('/:id/coins', protect, teacherOnly, async (req, res) => {
   }
 });
 
+// ── PATCH /api/students/:id/class ────────────────
+router.patch('/:id/class', protect, teacherOnly, async (req, res) => {
+  try {
+    const { class: newClass } = req.body;
+    if (!newClass || !newClass.trim())
+      return res.status(400).json({ message: 'Class name is required' });
+
+    const student = await User.findById(req.params.id);
+    if (!student || student.role !== 'student')
+      return res.status(404).json({ message: 'Student not found' });
+
+    student.class = newClass.trim();
+    await student.save();
+
+    res.json({ student });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // ── GET /api/students/:id/transactions ───────────
 router.get('/:id/transactions', protect, async (req, res) => {
   try {
