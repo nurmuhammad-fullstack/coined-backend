@@ -9,30 +9,15 @@ const router = express.Router();
 // GET /api/classes - Get all classes for teacher
 router.get('/', protect, teacherOnly, async (req, res) => {
   try {
-    let classes = await Class.find({ teacher: req.user._id }).sort({ createdAt: -1 });
-
-    // If no Class documents exist yet, auto-create them from student class names
-    if (classes.length === 0) {
-      const students = await User.find({ role: 'student', teacher: req.user._id }).select('class');
-      const uniqueNames = [...new Set(students.map(s => s.class).filter(Boolean))].sort();
-      if (uniqueNames.length > 0) {
-        await Promise.all(uniqueNames.map(name =>
-          Class.findOneAndUpdate(
-            { name, teacher: req.user._id },
-            { name, teacher: req.user._id, description: '' },
-            { upsert: true, new: true }
-          )
-        ));
-        classes = await Class.find({ teacher: req.user._id }).sort({ name: 1 });
-      }
-    }
-
+    const classes = await Class.find({ teacher: req.user._id }).sort({ createdAt: -1 });
+    
+    // Get student count for each class
     const classesWithCount = await Promise.all(
       classes.map(async (cls) => {
-        const studentCount = await User.countDocuments({
-          role: 'student',
+        const studentCount = await User.countDocuments({ 
+          role: 'student', 
           class: cls.name,
-          teacher: req.user._id
+          teacher: req.user._id 
         });
         return {
           _id: cls._id,
@@ -44,10 +29,10 @@ router.get('/', protect, teacherOnly, async (req, res) => {
         };
       })
     );
-
+    
     res.json(classesWithCount);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+  } catch (err) { 
+    res.status(500).json({ message: err.message }); 
   }
 });
 
