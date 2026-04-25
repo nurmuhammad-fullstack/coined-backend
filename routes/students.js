@@ -130,6 +130,24 @@ router.post('/:id/coins', protect, teacherOnly, async (req, res) => {
   }
 });
 
+router.patch('/:id/class', protect, teacherOnly, async (req, res) => {
+  try {
+    const { class: newClass } = req.body;
+    if (!newClass || !newClass.trim())
+      return res.status(400).json({ message: 'Class name is required' });
+
+    const student = await loadOwnedStudent(req.user._id, req.params.id);
+    if (student === null) return res.status(404).json({ message: 'Student not found' });
+    if (student === false) return res.status(403).json({ message: 'Access denied' });
+
+    student.class = newClass.trim();
+    await student.save();
+    res.json({ student });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 router.get('/:id/transactions', protect, async (req, res) => {
   try {
     const isOwn = req.user._id.toString() === req.params.id;
