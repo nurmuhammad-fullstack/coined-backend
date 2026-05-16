@@ -1,5 +1,6 @@
 const express = require('express');
 const User = require('../models/User');
+const Class = require('../models/Class');
 const Transaction = require('../models/Transaction');
 const Notification = require('../models/Notification');
 const { protect, teacherOnly } = require('../middleware/auth');
@@ -65,6 +66,36 @@ router.get('/:id', protect, teacherOnly, async (req, res) => {
     if (student === null) return res.status(404).json({ message: 'Student not found' });
     if (student === false) return res.status(403).json({ message: 'Access denied' });
     res.json(student);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+router.put('/:id', protect, teacherOnly, async (req, res) => {
+  try {
+    const { class: newClass } = req.body;
+
+    if (!newClass || !newClass.trim()) {
+      return res.status(400).json({ message: 'Class name is required' });
+    }
+
+    const student = await loadOwnedStudent(req.user._id, req.params.id);
+    if (student === null) return res.status(404).json({ message: 'Student not found' });
+    if (student === false) return res.status(403).json({ message: 'Access denied' });
+
+    const targetClass = await Class.findOne({
+      name: newClass.trim(),
+      teacher: req.user._id,
+    });
+
+    if (!targetClass) {
+      return res.status(404).json({ message: 'Class not found' });
+    }
+
+    student.class = targetClass.name;
+    await student.save();
+
+    res.json({ student });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
